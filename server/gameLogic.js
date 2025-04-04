@@ -21,8 +21,8 @@ const DIRECTIONS = {
 class GameLogic {
 
     constructor() {
+        this.gameStarted = false;
         this.players = new Map();
-        this.items = new Map();
         this.loadGameData();
         this.elapsedTime = 0;
     }
@@ -30,12 +30,6 @@ class GameLogic {
     async loadGameData() {
         this.gameData = await this.fetchGameData();
         for(let level of this.gameData.levels){
-            for(let sprite of level.sprites){
-                if(!sprite.type.includes("Player") && !sprite.type.includes("Boat")){
-                    this.items.set(sprite.type, sprite);
-                }
-            }
-            
             // Tamaño de la pantalla
             for(let layer of level.layers) {
                 this.width = layer.tileMap[0].length * layer.tilesWidth;
@@ -70,7 +64,6 @@ class GameLogic {
             y: 160 / (layer.tilesHeight * layer["tileMap"].length)
         }
         console.log(pos);
-        let color = this.getAvailableColor();
 
         this.players.set(id, {
             id,
@@ -81,7 +74,6 @@ class GameLogic {
             map: "Main",
             zone: "", // Col·lisió amb objectes o zones
             hasFlag: false,
-            color,
         });
 
         return this.players.get(id);
@@ -123,22 +115,31 @@ class GameLogic {
 
     // Blucle de joc (funció que s'executa contínuament)
     updateGame(fps) {
-        let deltaTime = 1 / fps;
-        this.elapsedTime += deltaTime;
+        if(this.gameStarted) {
+            let deltaTime = 1 / fps;
+            this.elapsedTime += deltaTime;
 
-        // Actualitzar la posició dels clients
-        this.players.forEach(client => {
+            // Actualitzar la posició dels clients
+            this.players.forEach(client => {
 
-            let newClientX = client.x;
-            let newClientY = client.y;
+                let newClientX = client.x;
+                let newClientY = client.y;
 
-            // Gestión de areas
-            let area = this.checkValidPosition(newClientX, newClientY, client);
-            if(area !== "Wall") {
-                client.x = newClientX;
-                client.y = newClientY;
+                // Gestión de areas
+                let area = this.checkValidPosition(newClientX, newClientY, client);
+                if(area !== "Wall") {
+                    client.x = newClientX;
+                    client.y = newClientY;
+                }
+            });
+        }else {
+            if(this.players.size >= 4) {
+                setTimeout(() => {
+                    this.gameStarted = true;
+                }, 5000);
             }
-        });
+        }
+        
     }
 
     checkValidPosition(x, y, client) {
@@ -193,11 +194,11 @@ class GameLogic {
     // Retorna l'estat del joc (per enviar-lo als clients/jugadors)
     getGameState() {
         const gameState = {
+            started: this.gameStarted,
             time: Math.trunc(this.elapsedTime),
             players: Array.from(this.players.values()),
-            items: Array.from(this.items.values()),
         }
-        // console.log(`GameState: ${JSON.stringify(gameState)}`);
+        console.log(`GameState: ${JSON.stringify(gameState)}`);
         return gameState;
     }
 }
