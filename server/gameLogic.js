@@ -6,6 +6,10 @@ const fs = require('fs').promises;
 const COLORS = ['green', 'blue', 'orange', 'red', 'purple'];
 const SPEED = 0.2;
 
+const TILE_SIZE = 16; // Tamaño de cada tile en píxeles
+const WIDTH_IN_TILES = 48; // Ancho del mapa en tiles
+const HEIGHT_IN_TILES = 32; // Alto del mapa en tiles
+
 const DIRECTIONS = {
     "up": { dx: 0, dy: -1 },
     "upLeft": { dx: -1, dy: -1 },
@@ -21,10 +25,11 @@ const DIRECTIONS = {
 class GameLogic {
 
     constructor() {
-        this.gameStarted = false;
+        this.gameStarted = true;
         this.players = new Map();
         this.loadGameData();
         this.elapsedTime = 0;
+        this.map = "Deepwater Ruins";
     }
 
     async loadGameData() {
@@ -38,6 +43,10 @@ class GameLogic {
         }
         if (!this.gameData) {
             console.error("Error: game_data.json no se pudo cargar.");
+        }
+        this.flagPos = {
+            dx: Math.random(),
+            dy: Math.random()
         }
     }
 
@@ -126,11 +135,14 @@ class GameLogic {
                 let newClientY = client.y;
 
                 // Gestión de areas
-                let area = this.checkValidPosition(newClientX, newClientY, client);
-                if(area !== "Wall") {
-                    client.x = newClientX;
-                    client.y = newClientY;
-                }
+                // let area = this.checkValidPosition(newClientX, newClientY, client);
+                // if(area !== "Wall") {
+                client.x = newClientX + (DIRECTIONS[client.direction].dx * client.speed * deltaTime);
+                client.y = newClientY + (DIRECTIONS[client.direction].dy * client.speed * deltaTime);
+
+                console.log(`Client ${client.id} - X: ${client.x}, Y: ${client.y}`);
+                // client.y = newClientY;
+                // }
             });
         }else {
             if(this.players.size >= 4) {
@@ -144,10 +156,18 @@ class GameLogic {
 
     checkValidPosition(x, y, client) {
         let levels = this.gameData.levels
-
-        let level = levels.filter((level)=> {
-            return level.name == client.map;
-        })[0];
+        let level;
+        if(client) {
+            level = levels.filter((level)=> {
+                return level.name == client.map;
+            })[0];
+        }else {
+            level = levels.filter((level) => {
+                return level.name == this.map;
+            })[0];
+        }
+        if(!level) return false;
+        
         let layer = level["layers"][0];
         let width = layer.tileMap[0].length;
         let height = layer.tileMap.length;
@@ -197,6 +217,7 @@ class GameLogic {
             started: this.gameStarted,
             time: Math.trunc(this.elapsedTime),
             players: Array.from(this.players.values()),
+            flagPos: this.flagPos,
         }
         console.log(`GameState: ${JSON.stringify(gameState)}`);
         return gameState;
