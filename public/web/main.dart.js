@@ -6396,8 +6396,8 @@ la:function la(a,b){this.a=a
 this.b=b},
 Ju:function Ju(a){var _=this
 _.a=$
-_.b="localhost"
-_.c="8888"
+_.b="bandera4.ieti.site"
+_.c="443"
 _.e=_.d=null
 _.f=a},
 Jv:function Jv(a){this.a=a},
@@ -23075,7 +23075,7 @@ tt(){var s=this
 if(s.e>=5)return
 s.d=!1
 s.ad()
-s.a.oI("localhost",8888,s.gGr(),s.gGn(),s.gGp())
+s.a.oI("bandera4.ieti.site",443,s.gGr(),s.gGn(),s.gGp())
 s.d=!0
 s.e=0
 s.ad()},
