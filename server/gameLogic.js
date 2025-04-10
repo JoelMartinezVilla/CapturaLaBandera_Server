@@ -160,7 +160,7 @@ class GameLogic {
     }
 
     checkValidPosition(x, y, client) {
-        if(x=>1 || x<=0 || y>=1 || y<=0){
+        if(x>=1 || x<=0 || y>=1 || y<=0){
             return false;
         }
         return true;
