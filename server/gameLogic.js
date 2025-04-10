@@ -2,6 +2,7 @@
 
 const path = require('path');
 const fs = require('fs').promises;
+const { broadcast } = require("./utilsWebSockets");
 
 const COLORS = ['green', 'blue', 'orange', 'red', 'purple'];
 const SPEED = 0.2;
@@ -109,6 +110,11 @@ class GameLogic {
                             this.players.get(id).moving = false;
                         }
                     }
+                    break;
+                case "spectator":
+                    console.log("me cago en dios")
+                    let spectatorId = id.replace("S", "C")
+                    broadcast(JSON.stringify({ type: "spectator", id: id, newId: spectatorId}));
                     break;
                 default:
                     break;
