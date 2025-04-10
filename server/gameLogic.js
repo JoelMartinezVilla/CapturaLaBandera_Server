@@ -140,8 +140,10 @@ class GameLogic {
                 let newClientX = client.x;
                 let newClientY = client.y;
                 if(client.moving) {
-                    client.x = newClientX + (DIRECTIONS[client.direction].dx * client.speed * deltaTime);
-                    client.y = newClientY + (DIRECTIONS[client.direction].dy * client.speed * deltaTime);
+                    if(this.checkValidPosition(newClientX, newClientY, client)){
+                        client.x = newClientX + (DIRECTIONS[client.direction].dx * client.speed * deltaTime);
+                        client.y = newClientY + (DIRECTIONS[client.direction].dy * client.speed * deltaTime);
+                    }
                 }
                 
 
@@ -158,52 +160,56 @@ class GameLogic {
     }
 
     checkValidPosition(x, y, client) {
-        let levels = this.gameData.levels
-        let level;
-        if(client) {
-            level = levels.filter((level)=> {
-                return level.name == client.map;
-            })[0];
-        }else {
-            level = levels.filter((level) => {
-                return level.name == this.map;
-            })[0];
+        if(x>1 || y>1){
+            return false;
         }
-        if(!level) return false;
+        return true;
+        // let levels = this.gameData.levels
+        // let level;
+        // if(client) {
+        //     level = levels.filter((level)=> {
+        //         return level.name == client.map;
+        //     })[0];
+        // }else {
+        //     level = levels.filter((level) => {
+        //         return level.name == this.map;
+        //     })[0];
+        // }
+        // if(!level) return false;
         
-        let layer = level["layers"][0];
-        let width = layer.tileMap[0].length;
-        let height = layer.tileMap.length;
-        let zones = level["zones"];
-        // Convertir la posición normalizada a coordenadas reales
-        let realX = x * layer.tilesWidth * width;
-        let realY = y * layer.tilesHeight * height;
+        // let layer = level["layers"][0];
+        // let width = layer.tileMap[0].length;
+        // let height = layer.tileMap.length;
+        // let zones = level["zones"];
+        // // Convertir la posición normalizada a coordenadas reales
+        // let realX = x * layer.tilesWidth * width;
+        // let realY = y * layer.tilesHeight * height;
         
-        // Obtener dimensiones reales del sprite
-        let sprite = levels[0]["sprites"][0];
+        // // Obtener dimensiones reales del sprite
+        // let sprite = levels[0]["sprites"][0];
     
-        // Definir la hitbox: 16x16 píxeles en la parte inferior central del sprite
-        const HITBOX_SIZE = 16;
-        let hitboxX = realX + (sprite.width / 2) - (HITBOX_SIZE / 2);
-        let hitboxY = realY + sprite.height - HITBOX_SIZE;
-        let hitboxWidth = HITBOX_SIZE;
-        let hitboxHeight = HITBOX_SIZE;
+        // // Definir la hitbox: 16x16 píxeles en la parte inferior central del sprite
+        // const HITBOX_SIZE = 16;
+        // let hitboxX = realX + (sprite.width / 2) - (HITBOX_SIZE / 2);
+        // let hitboxY = realY + sprite.height - HITBOX_SIZE;
+        // let hitboxWidth = HITBOX_SIZE;
+        // let hitboxHeight = HITBOX_SIZE;
     
-        // Comprobar intersección entre la hitbox y cada zona
-        for (let zone of zones) {
-            let zoneX = zone.x;
-            let zoneY = zone.y;
-            let zoneWidth = zone.width;
-            let zoneHeight = zone.height;
+        // // Comprobar intersección entre la hitbox y cada zona
+        // for (let zone of zones) {
+        //     let zoneX = zone.x;
+        //     let zoneY = zone.y;
+        //     let zoneWidth = zone.width;
+        //     let zoneHeight = zone.height;
             
-            if (hitboxX < zoneX + zoneWidth &&
-                hitboxX + hitboxWidth > zoneX &&
-                hitboxY < zoneY + zoneHeight &&
-                hitboxY + hitboxHeight > zoneY) {
-                return zone.type;
-            }
-        }
-        return "";
+        //     if (hitboxX < zoneX + zoneWidth &&
+        //         hitboxX + hitboxWidth > zoneX &&
+        //         hitboxY < zoneY + zoneHeight &&
+        //         hitboxY + hitboxHeight > zoneY) {
+        //         return zone.type;
+        //     }
+        // }
+        // return "";
     }
 
     // Detectar si dos rectangles es sobreposen
