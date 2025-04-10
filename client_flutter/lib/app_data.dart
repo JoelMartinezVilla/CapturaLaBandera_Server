@@ -9,18 +9,18 @@ import 'utils_websockets.dart';
 class AppData extends ChangeNotifier {
   // Atributs per gestionar la connexió
   final WebSocketsHandler _wsHandler = WebSocketsHandler();
-  final String _wsServer = "localhost";
-  final int _wsPort = 8888;
+  final String _wsServer = "bandera4.ieti.site";
+  final int _wsPort = 443;
   bool isConnected = false;
   int _reconnectAttempts = 0;
   final int _maxReconnectAttempts = 5;
   final Duration _reconnectDelay = Duration(seconds: 3);
 
   // Atributs per gestionar el joc
-  Map<String, dynamic> gameData = {};     // Dades de 'game_data.json'
+  Map<String, dynamic> gameData = {}; // Dades de 'game_data.json'
   Map<String, ui.Image> imagesCache = {}; // Imatges
-  Map<String, dynamic> gameState = {};    // Estat rebut del servidor
-  dynamic playerData;                     // Apuntador al jugador (a gameState)
+  Map<String, dynamic> gameState = {}; // Estat rebut del servidor
+  dynamic playerData; // Apuntador al jugador (a gameState)
   Camera camera = Camera();
 
   AppData() {
@@ -158,7 +158,8 @@ class AppData extends ChangeNotifier {
     return completer.future;
   }
 
-  Future<void>  _loadGameData([String filePath = 'assets/flag_game/game_data.json']) async {
+  Future<void> _loadGameData(
+      [String filePath = 'assets/flag_game/game_data.json']) async {
     try {
       final jsonString = await rootBundle.loadString(filePath);
       gameData = jsonDecode(jsonString);
@@ -186,5 +187,4 @@ class AppData extends ChangeNotifier {
       }
     }
   }
-
 }

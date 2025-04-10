@@ -6,8 +6,8 @@ enum ConnectionStatus { disconnected, disconnecting, connecting, connected }
 
 class WebSocketsHandler {
   late Function _callback;
-  String ip = "localhost";
-  String port = "8888";
+  String ip = "bandera4.ieti.site";
+  String port = "443";
   String? socketId;
 
   WebSocketChannel? _socketClient;
