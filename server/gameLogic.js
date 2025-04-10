@@ -79,7 +79,8 @@ class GameLogic {
             x: pos.x,
             y: pos.y,
             speed: SPEED,
-            direction: "none",
+            direction: "down",
+            moving: false,
             map: "Main",
             zone: "", // Col·lisió amb objectes o zones
             hasFlag: false,
@@ -101,7 +102,12 @@ class GameLogic {
             switch (obj.type) {
                 case "direction":
                     if (this.players.has(id)) {
-                        this.players.get(id).direction = obj.value;
+                        if(obj.value != "none") {
+                            this.players.get(id).direction = obj.value;
+                            this.players.get(id).moving = true;
+                        } else {
+                            this.players.get(id).moving = false;
+                        }
                     }
                     break;
                 default:
@@ -133,16 +139,13 @@ class GameLogic {
 
                 let newClientX = client.x;
                 let newClientY = client.y;
-
-                // Gestión de areas
-                // let area = this.checkValidPosition(newClientX, newClientY, client);
-                // if(area !== "Wall") {
-                client.x = newClientX + (DIRECTIONS[client.direction].dx * client.speed * deltaTime);
-                client.y = newClientY + (DIRECTIONS[client.direction].dy * client.speed * deltaTime);
+                if(client.moving) {
+                    client.x = newClientX + (DIRECTIONS[client.direction].dx * client.speed * deltaTime);
+                    client.y = newClientY + (DIRECTIONS[client.direction].dy * client.speed * deltaTime);
+                }
+                
 
                 console.log(`Client ${client.id} - X: ${client.x}, Y: ${client.y}`);
-                // client.y = newClientY;
-                // }
             });
         }else {
             if(this.players.size >= 4) {
