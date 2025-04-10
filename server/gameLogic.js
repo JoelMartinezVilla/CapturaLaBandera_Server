@@ -142,15 +142,17 @@ class GameLogic {
 
             // Actualitzar la posició dels clients
             this.players.forEach(client => {
-
-                let newClientX = client.x;
-                let newClientY = client.y;
-                if(client.moving) {
-                    if(this.checkValidPosition(newClientX, newClientY, client)){
-                        client.x = newClientX + (DIRECTIONS[client.direction].dx * client.speed * deltaTime);
-                        client.y = newClientY + (DIRECTIONS[client.direction].dy * client.speed * deltaTime);
+                
+                if (client.moving) {
+                    let nextX = client.x + (DIRECTIONS[client.direction].dx * client.speed * deltaTime);
+                    let nextY = client.y + (DIRECTIONS[client.direction].dy * client.speed * deltaTime);
+                
+                    if (this.checkValidPosition(nextX, nextY, client)) {
+                        client.x = nextX;
+                        client.y = nextY;
                     }
                 }
+                
                 
 
                 console.log(`Client ${client.id} - X: ${client.x}, Y: ${client.y}`);
