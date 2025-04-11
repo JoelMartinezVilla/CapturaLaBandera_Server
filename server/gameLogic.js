@@ -112,7 +112,6 @@ class GameLogic {
                     }
                     break;
                 case "spectator":
-                    console.log("me cago en dios")
                     let spectatorId = id.replace("S", "C")
                     broadcast(JSON.stringify({ type: "spectator", id: id, newId: spectatorId}));
                     break;
