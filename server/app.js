@@ -4,7 +4,7 @@ const webSockets = require('./utilsWebSockets.js');
 const GameLoop = require('./utilsGameLoop.js');
 
 const debug = true;
-const port = process.env.PORT || 8888;
+const port = process.env.PORT || 3000;
 
 // Inicialitzar WebSockets i la lògica del joc
 const ws = new webSockets();
@@ -15,6 +15,11 @@ let gameLoop = new GameLoop();
 const app = express();
 app.use(express.static('public'));
 app.use(express.json());
+
+(async () => {
+    await game.loadGameData(); // Espera a que cargue el gameData correctamente
+    gameLoop.start();
+})();
 
 // Inicialitzar servidor HTTP
 const httpServer = app.listen(port, '0.0.0.0', () => {
@@ -32,7 +37,7 @@ ws.onConnection = (socket, id) => {
 
 // Gestionar missatges rebuts dels clients
 ws.onMessage = (socket, id, msg) => {
-    if (debug) console.log(`New message from ${id}: ${msg.substring(0, 32)}...`);
+    // if (debug) console.log(`New message from ${id}: ${msg.substring(0, 32)}...`);
     game.handleMessage(id, msg);
 };
 
@@ -48,7 +53,6 @@ gameLoop.run = (fps) => {
     game.updateGame(fps);
     ws.broadcast(JSON.stringify({ type: "update", gameState: game.getGameState() }));
 };
-gameLoop.start();
 
 // Gestionar el tancament del servidor
 process.on('SIGTERM', shutDown);
