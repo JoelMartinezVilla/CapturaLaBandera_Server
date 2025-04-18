@@ -6,6 +6,13 @@ class CanvasPainter extends CustomPainter {
   final AppData appData;
   final dynamic gameData;
 
+  final colors = {
+    "red": Colors.red,
+    "blue": Colors.blue,
+    "yellow": Colors.yellow,
+    "green": Colors.green
+  };
+
   CanvasPainter(this.appData, this.gameData);
 
   @override
@@ -14,7 +21,7 @@ class CanvasPainter extends CustomPainter {
     if (gameState.isEmpty) return;
 
     // Fondo verde
-    final backgroundPaint = Paint()..color = Colors.green;
+    final backgroundPaint = Paint()..color = Colors.grey;
     canvas.drawRect(
         Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
 
@@ -23,8 +30,9 @@ class CanvasPainter extends CustomPainter {
       for (var player in gameState["players"]) {
         final x = player["x"] * size.width;
         final y = player["y"] * size.height;
+        final playerColor = colors[player["color"]] ?? Colors.blue;
         final rect = Rect.fromLTWH(x, y, 20, 20);
-        final paint = Paint()..color = Colors.blue;
+        final paint = Paint()..color = playerColor;
         canvas.drawRect(rect, paint);
       }
     }
@@ -32,9 +40,9 @@ class CanvasPainter extends CustomPainter {
     // Flag (cuadrado rojo)
     if (gameState["flagPos"] != null) {
       final fx = gameState["flagPos"]["dx"] * size.width;
-      final fy = gameState["flagPos"]["dy"] * size.height;
+      final fy = (1 - gameState["flagPos"]["dy"]) * size.height;
       final flagRect = Rect.fromLTWH(fx, fy, 20, 20);
-      final flagPaint = Paint()..color = Colors.red;
+      final flagPaint = Paint()..color = Colors.purple;
       canvas.drawRect(flagRect, flagPaint);
     }
   }
