@@ -2,6 +2,7 @@ const express = require('express');
 const GameLogic = require('./gameLogic.js');
 const webSockets = require('./utilsWebSockets.js');
 const GameLoop = require('./utilsGameLoop.js');
+require('dotenv').config();
 
 const debug = true;
 const port = process.env.PORT || 3000;
