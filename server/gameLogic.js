@@ -23,6 +23,39 @@ const DIRECTIONS = {
     "none": { dx: 0, dy: 0 }
 };
 
+const POSITIONS = {
+    red: { dx: 32, dy: 720},
+    blue: { dx: 32, dy: 32},
+    green: { dx: 720, dy: 32},
+    yellow: { dx: 720, dy: 720}
+};
+
+const CHESTS = {
+    red: {
+        dx: 48,
+        dy: 704
+    },
+    blue: {
+        dx: 48,
+        dy: 48
+    },
+    green: {
+        dx: 704,
+        dy: 48
+    },
+    yellow: {
+        dx: 704,
+        dy: 704
+    }
+}
+
+const FLAG_ZONE = {
+    dx: 288 / TILE_SIZE / WIDTH_IN_TILES,
+    dy: 288 / TILE_SIZE / HEIGHT_IN_TILES,
+    width: 192,
+    height: 192
+};
+
 let pos;
 
 class GameLogic {
@@ -34,18 +67,28 @@ class GameLogic {
         this.players = new Map();
         this.waitingPlayers = new Map();
         this.elapsedTime = 0;
-        this.map = "Deepwater Ruins";
         this.usedColors = new Set();
     }
 
     async loadGameData() {
-        this.flag = {
-            available: true,
-            dx: Math.random(),
-            dy: Math.random()
+        do {
+            this.flag = {
+                available: true,
+                dx: FLAG_ZONE.dx + Math.random() * (FLAG_ZONE.width / (TILE_SIZE * WIDTH_IN_TILES)),
+                dy: FLAG_ZONE.dy + Math.random() * (FLAG_ZONE.height / (TILE_SIZE * HEIGHT_IN_TILES))
+            }
         }
+        while (!this.areRectColliding(
+            this.flag.dx * TILE_SIZE * WIDTH_IN_TILES, 
+            this.flag.dy * TILE_SIZE * HEIGHT_IN_TILES, 
+            FLAG_SIZE, 
+            FLAG_SIZE, 
+            FLAG_ZONE.dx * TILE_SIZE * WIDTH_IN_TILES, 
+            FLAG_ZONE.dy * TILE_SIZE * HEIGHT_IN_TILES, 
+            FLAG_ZONE.width,
+            FLAG_ZONE.height)
+        )
     }
-
 
     async fetchGameData() {
         const filePath = path.join(__dirname, '../public', 'game_data.json'); 
@@ -75,7 +118,7 @@ class GameLogic {
             speed: SPEED,
             direction: "down",
             moving: false,
-            zone: "", // Col·lisió amb objectes o zones
+            zone: "", 
             hasFlag: false,
             
             color: "none",
@@ -128,6 +171,8 @@ class GameLogic {
                     this.usedColors.add(color);
                     this.players.set(id, this.waitingPlayers.get(id));
                     this.players.get(id).color = color;
+                    this.players.get(id).x = POSITIONS[color].dx / WIDTH_IN_TILES / TILE_SIZE;
+                    this.players.get(id).y = POSITIONS[color].dy / HEIGHT_IN_TILES / TILE_SIZE;
                     // this.waitingPlayers.delete(id);
                     break;
                 default:

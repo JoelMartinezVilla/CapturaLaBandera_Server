@@ -210,7 +210,80 @@
           "visible": true
         }
       ],
-      "zones": [],
+      "zones": [
+        {
+          "type": "blue_spawn",
+          "x": 32,
+          "y": 32,
+          "width": 16,
+          "height": 16,
+          "color": "blue"
+        },
+        {
+          "type": "green_spawn",
+          "x": 720,
+          "y": 32,
+          "width": 16,
+          "height": 16,
+          "color": "green"
+        },
+        {
+          "type": "yellow_spawn",
+          "x": 720,
+          "y": 720,
+          "width": 16,
+          "height": 16,
+          "color": "yellow"
+        },
+        {
+          "type": "red_spawn",
+          "x": 32,
+          "y": 720,
+          "width": 16,
+          "height": 16,
+          "color": "red"
+        },
+        {
+          "type": "blue_chest",
+          "x": 48,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "color": "orange"
+        },
+        {
+          "type": "green_chest",
+          "x": 704,
+          "y": 48,
+          "width": 16,
+          "height": 16,
+          "color": "orange"
+        },
+        {
+          "type": "red_chest",
+          "x": 48,
+          "y": 704,
+          "width": 16,
+          "height": 16,
+          "color": "orange"
+        },
+        {
+          "type": "yellow_chest",
+          "x": 704,
+          "y": 704,
+          "width": 16,
+          "height": 16,
+          "color": "orange"
+        },
+        {
+          "type": "orb_spawn",
+          "x": 288,
+          "y": 288,
+          "width": 192,
+          "height": 192,
+          "color": "purple"
+        }
+      ],
       "sprites": []
     }
   ]
