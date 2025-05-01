@@ -32,28 +32,36 @@ const POSITIONS = {
 
 const CHESTS = {
     red: {
-        dx: 48,
-        dy: 704
+        dx: 48 / (TILE_SIZE * WIDTH_IN_TILES),
+        dy: 736 / (TILE_SIZE * HEIGHT_IN_TILES),
+        width: 24 / (TILE_SIZE * WIDTH_IN_TILES),
+        height: 24 / (TILE_SIZE * HEIGHT_IN_TILES)
     },
     blue: {
-        dx: 48,
-        dy: 48
+        dx: 48 / (TILE_SIZE * WIDTH_IN_TILES),
+        dy: 56 / (TILE_SIZE * HEIGHT_IN_TILES),
+        width: 24 / (TILE_SIZE * WIDTH_IN_TILES),
+        height: 24 / (TILE_SIZE * HEIGHT_IN_TILES)
     },
     green: {
-        dx: 704,
-        dy: 48
+        dx: 688 / (TILE_SIZE * WIDTH_IN_TILES),
+        dy: 56 / (TILE_SIZE * HEIGHT_IN_TILES),
+        width: 24 / (TILE_SIZE * WIDTH_IN_TILES),
+        height: 24 / (TILE_SIZE * HEIGHT_IN_TILES)
     },
     yellow: {
-        dx: 704,
-        dy: 704
+        dx: 688 / (TILE_SIZE * WIDTH_IN_TILES),
+        dy: 736 / (TILE_SIZE * HEIGHT_IN_TILES),
+        width: 24 / (TILE_SIZE * WIDTH_IN_TILES),
+        height: 24 / (TILE_SIZE * HEIGHT_IN_TILES)
     }
 }
 
 const FLAG_ZONE = {
-    dx: 288 / TILE_SIZE / WIDTH_IN_TILES,
-    dy: 288 / TILE_SIZE / HEIGHT_IN_TILES,
-    width: 192,
-    height: 192
+    dx: 288 / (TILE_SIZE * WIDTH_IN_TILES),
+    dy: 288 / (TILE_SIZE * HEIGHT_IN_TILES),
+    width: 192 / (TILE_SIZE * WIDTH_IN_TILES),
+    height: 192 / (TILE_SIZE * HEIGHT_IN_TILES)
 };
 
 let pos;
@@ -74,17 +82,17 @@ class GameLogic {
         do {
             this.flag = {
                 available: true,
-                dx: FLAG_ZONE.dx + Math.random() * (FLAG_ZONE.width / (TILE_SIZE * WIDTH_IN_TILES)),
-                dy: FLAG_ZONE.dy + Math.random() * (FLAG_ZONE.height / (TILE_SIZE * HEIGHT_IN_TILES))
+                dx: Math.random(),
+                dy: Math.random()
             }
         }
         while (!this.areRectColliding(
-            this.flag.dx * TILE_SIZE * WIDTH_IN_TILES, 
-            this.flag.dy * TILE_SIZE * HEIGHT_IN_TILES, 
-            FLAG_SIZE, 
-            FLAG_SIZE, 
-            FLAG_ZONE.dx * TILE_SIZE * WIDTH_IN_TILES, 
-            FLAG_ZONE.dy * TILE_SIZE * HEIGHT_IN_TILES, 
+            this.flag.dx,
+            this.flag.dy,
+            FLAG_SIZE / (TILE_SIZE * WIDTH_IN_TILES),
+            FLAG_SIZE / (TILE_SIZE * HEIGHT_IN_TILES),
+            FLAG_ZONE.dx,
+            FLAG_ZONE.dy,
             FLAG_ZONE.width,
             FLAG_ZONE.height)
         )
@@ -120,6 +128,7 @@ class GameLogic {
             moving: false,
             zone: "", 
             hasFlag: false,
+            points: 0,
             
             color: "none",
         });
@@ -196,6 +205,7 @@ class GameLogic {
             this.players.forEach(client => {
                 if (!client) return;
 
+                // Check if player and flag are colliding
                 if(this.areRectColliding(
                     client.x * TILE_SIZE * WIDTH_IN_TILES, 
                     client.y * TILE_SIZE * HEIGHT_IN_TILES, 
@@ -206,8 +216,43 @@ class GameLogic {
                     FLAG_SIZE, 
                     FLAG_SIZE
                 ) && this.flag.available) {
+                    client.points += 50;
                     client.hasFlag = true;
                     this.flag.available = false;
+                }
+
+                // Check if player and chest are colliding, and user has flag
+                if(this.areRectColliding(
+                    client.x,
+                    client.y,
+                    CHARACTER_SIZE / (TILE_SIZE * WIDTH_IN_TILES),
+                    CHARACTER_SIZE / (TILE_SIZE * HEIGHT_IN_TILES),
+                    CHESTS[client.color].dx,
+                    CHESTS[client.color].dy,
+                    CHESTS[client.color].width,
+                    CHESTS[client.color].height
+                ) && client.hasFlag) {
+                    console.log("DEJANDO BANDERA")
+                    client.hasFlag = false;
+                    client.points += 500;
+                    do {
+                        this.flag = {
+                            available: true,
+                            dx: Math.random(),
+                            dy: Math.random()
+                        }
+                    }
+                    while (!this.areRectColliding(
+                        this.flag.dx,
+                        this.flag.dy,
+                        FLAG_SIZE / (TILE_SIZE * WIDTH_IN_TILES),
+                        FLAG_SIZE / (TILE_SIZE * HEIGHT_IN_TILES),
+                        FLAG_ZONE.dx,
+                        FLAG_ZONE.dy,
+                        FLAG_ZONE.width,
+                        FLAG_ZONE.height)
+                    )
+
                 }
                 
                 if (client.moving) {
@@ -292,13 +337,26 @@ class GameLogic {
             player.zone = ""; // Colisión con objetos o zonas
             player.hasFlag = false;
             player.color = "none";
+            player.points = 0;
         });
 
-        this.flag = {
-            available: true,
-            dx: Math.random(),
-            dy: Math.random()
+        do {
+            this.flag = {
+                available: true,
+                dx: Math.random(),
+                dy: Math.random()
+            }
         }
+        while (!this.areRectColliding(
+            this.flag.dx,
+            this.flag.dy,
+            FLAG_SIZE / (TILE_SIZE * WIDTH_IN_TILES),
+            FLAG_SIZE / (TILE_SIZE * HEIGHT_IN_TILES),
+            FLAG_ZONE.dx,
+            FLAG_ZONE.dy,
+            FLAG_ZONE.width,
+            FLAG_ZONE.height)
+        )
     }
 
     // Retorna l'estat del joc (per enviar-lo als clients/jugadors)
