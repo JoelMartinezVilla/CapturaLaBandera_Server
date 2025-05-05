@@ -25,8 +25,8 @@ const DIRECTIONS = {
 
 const POSITIONS = {
     red: { dx: 32, dy: 720},
-    blue: { dx: 32, dy: 32},
-    green: { dx: 720, dy: 32},
+    blue: { dx: 32, dy: 40},
+    green: { dx: 720, dy: 40},
     yellow: { dx: 720, dy: 720}
 };
 
@@ -64,8 +64,6 @@ const FLAG_ZONE = {
     height: 192 / (TILE_SIZE * HEIGHT_IN_TILES)
 };
 
-let pos;
-
 class GameLogic {
 
     constructor() {
@@ -73,9 +71,8 @@ class GameLogic {
         this.waitingToStart = false;
         this.timeToStart = 0;
         this.players = new Map();
-        this.waitingPlayers = new Map();
+        this.clients = new Map();
         this.elapsedTime = 120;
-        this.usedColors = new Set();
     }
 
     async loadGameData() {
@@ -113,41 +110,40 @@ class GameLogic {
 
     // Es connecta un client/jugador
     addClient(id) {
-        pos = {
-            x: 88 / (TILE_SIZE * WIDTH_IN_TILES),
-            y: 160 / (TILE_SIZE * HEIGHT_IN_TILES)
+        try {
+            this.clients.set(id, {
+                id,
+                ready: false,
+                x: 0,
+                y: 0,
+                speed: SPEED,
+                direction: "down",
+                moving: false,
+                zone: "", 
+                hasFlag: false,
+                points: 0,
+                
+                color: "none",
+            });
+            return this.clients.get(id);
+        } catch(e) {
+            console.error(e);
         }
-
-        this.waitingPlayers.set(id, {
-            id,
-            ready: false,
-            x: pos.x,
-            y: pos.y,
-            speed: SPEED,
-            direction: "down",
-            moving: false,
-            zone: "", 
-            hasFlag: false,
-            points: 0,
-            
-            color: "none",
-        });
-
-        return this.waitingPlayers.get(id);
     }
 
     // Es desconnecta un client/jugador
     removeClient(id) {
-        if (this.players.has(id)) {
-            this.usedColors.delete(this.players.get(id).color);
-            this.players.delete(id);
-            
+        try {
+            if (this.players.has(id)) {
+                this.players.delete(id);
+            }
+            if (this.clients.has(id)) {
+                this.clients.delete(id);
+            }
+        }catch(e) {
+            console.error("Error removing client: " + id)
         }
-        if (this.waitingPlayers.has(id)) {
-            this.usedColors.delete(this.waitingPlayers.get(id).color);
-            this.waitingPlayers.delete(id);
-            
-        }
+        
         
     }
 
@@ -172,22 +168,45 @@ class GameLogic {
                     broadcast(JSON.stringify({ type: "spectator", id: id, newId: spectatorId}));
                     break;
                 case "ready":
-                    if(this.players.length >= MAX_PLAYERS) return;
-                    let color = COLORS[Math.floor(Math.random() * COLORS.length)];
-                    while (this.usedColors.has(color)) {
-                        color = COLORS[Math.floor(Math.random() * COLORS.length)];
+
+                    if (this.players.has(id)) {
+                        console.info(`Not ready player ${id}`);
+                        const player = this.players.get(id);
+                        if (!player) return;
+                        this.players.delete(id);
+
+                    } else {
+                        console.info(`Ready player ${id}`);
+
+                        const wp = this.clients.get(id);
+                        if (!wp) {
+                            console.info(`[WARN] Player ${id} not found in clients.`);
+                            return;
+                        }
+
+                        if (this.players.size >= MAX_PLAYERS) {
+                            console.info(`[WARN] Max players reached`);
+                            return;
+                        }
+                        const color = COLORS[this.players.size];
+                        console.info("[COLOR] The color chosen is "+color+", at position "+this.players.size);
+                        const newPlayer = {
+                            ...wp,
+                            color: color,
+                            x: POSITIONS[color].dx / WIDTH_IN_TILES / TILE_SIZE,
+                            y: POSITIONS[color].dy / HEIGHT_IN_TILES / TILE_SIZE
+                        };
+                        
+                        this.players.set(id, newPlayer);
                     }
-                    this.usedColors.add(color);
-                    this.players.set(id, this.waitingPlayers.get(id));
-                    this.players.get(id).color = color;
-                    this.players.get(id).x = POSITIONS[color].dx / WIDTH_IN_TILES / TILE_SIZE;
-                    this.players.get(id).y = POSITIONS[color].dy / HEIGHT_IN_TILES / TILE_SIZE;
-                    // this.waitingPlayers.delete(id);
+
                     break;
                 default:
                     break;
             }
-        } catch (error) { }
+        } catch (error) { 
+            console.error(`Error en handleMessage de ${id} con msg ${msg}:`, error);
+        }
     }
 
     // Blucle de joc (funció que s'executa contínuament)
@@ -337,20 +356,15 @@ class GameLogic {
         this.timeToStart = 0;
         this.elapsedTime = 120;
 
-        pos = {
-            x: 88 / (TILE_SIZE * WIDTH_IN_TILES),
-            y: 160 / (TILE_SIZE * HEIGHT_IN_TILES)
-        }
-
         this.players.forEach(player => {
-            player.x = pos.x;
-            player.y = pos.y;
+            const colorPos = POSITIONS[player.color];
+            player.x = colorPos.dx / WIDTH_IN_TILES / TILE_SIZE;
+            player.y = colorPos.dy / HEIGHT_IN_TILES / TILE_SIZE;
             player.speed = SPEED;
             player.direction = "down";
             player.moving = false;
             player.zone = ""; // Colisión con objetos o zonas
             player.hasFlag = false;
-            player.color = "none";
             player.points = 0;
         });
 

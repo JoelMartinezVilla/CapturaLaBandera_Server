@@ -7,62 +7,119 @@ require('dotenv').config();
 const debug = true;
 const port = process.env.PORT || 3000;
 
-// Inicialitzar WebSockets i la lògica del joc
-const ws = new webSockets();
-const game = new GameLogic();
-let gameLoop = new GameLoop();
+process.on('uncaughtException', (err) => {
+    console.error('[UNCAUGHT EXCEPTION]', err);
+});
 
-// Inicialitzar servidor Express
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[UNHANDLED REJECTION]', reason);
+});
+
+let ws, game, gameLoop;
+
+try {
+    // Inicialitzar WebSockets i la lògica del joc
+    ws = new webSockets();
+    game = new GameLogic();
+    gameLoop = new GameLoop();
+} catch (err) {
+    console.error('[INIT ERROR] Error inicializando módulos:', err);
+    process.exit(1);
+}
+
 const app = express();
 app.use(express.static('public'));
 app.use(express.json());
 
+// Carregar dades del joc i començar el loop
 (async () => {
-    await game.loadGameData(); // Espera a que cargue el gameData correctamente
-    gameLoop.start();
+    try {
+        await game.loadGameData(); 
+        gameLoop.start();
+    } catch (err) {
+        console.error('[ASYNC INIT ERROR] Error en loadGameData o gameLoop.start():', err);
+        process.exit(1);
+    }
 })();
 
-// Inicialitzar servidor HTTP
-const httpServer = app.listen(port, '0.0.0.0', () => {
-    console.log(`Servidor HTTP escoltant a: http://localhost:${port}`);
-});
+let httpServer;
 
-// Gestionar WebSockets
-ws.init(httpServer, port);
+try {
+    httpServer = app.listen(port, '0.0.0.0', () => {
+        console.log(`Servidor HTTP escoltant a: http://localhost:${port}`);
+    });
+} catch (err) {
+    console.error('[SERVER ERROR] Error iniciant el servidor HTTP:', err);
+    process.exit(1);
+}
 
-// Què fa el servidor quan un client es connecta
+try {
+    ws.init(httpServer, port);
+} catch (err) {
+    console.error('[WS INIT ERROR] Error inicialitzant WebSocket server:', err);
+    process.exit(1);
+}
+
+// Client connectat
 ws.onConnection = (socket, id) => {
-    if (debug) console.log("WebSocket client connected: " + id);
-    game.addClient(id);
+    try {
+        if (debug) console.log("[WS CONNECTED] Client: " + id);
+        game.addClient(id);
+    } catch (err) {
+        console.error(`[WS CONNECT ERROR] Error afegint client ${id}:`, err);
+    }
 };
 
-// Gestionar missatges rebuts dels clients
+// Missatge rebut del client
 ws.onMessage = (socket, id, msg) => {
-    // if (debug) console.log(`New message from ${id}: ${msg.substring(0, 32)}...`);
-    game.handleMessage(id, msg);
+    try {
+        game.handleMessage(id, msg);
+    } catch (err) {
+        console.error(`[WS MESSAGE ERROR] Error gestionant missatge de ${id}: ${msg}`, err);
+    }
 };
 
-// Què fa el servidor quan un client es desconnecta
+// Client desconnectat
 ws.onClose = (socket, id) => {
-    if (debug) console.log("WebSocket client disconnected: " + id);
-    game.removeClient(id);
-    ws.broadcast(JSON.stringify({ type: "disconnected", from: "server" }));
+    try {
+        if (debug) console.log("[WS DISCONNECTED] Client: " + id);
+        game.removeClient(id);
+        ws.broadcast(JSON.stringify({ type: "disconnected", from: "server" }));
+    } catch (err) {
+        console.error(`[WS CLOSE ERROR] Error desconnectant client ${id}:`, err);
+    }
 };
 
-// **Game Loop**
+// Game Loop
 gameLoop.run = (fps) => {
-    game.updateGame(fps);
-    ws.broadcast(JSON.stringify({ type: "update", gameState: game.getGameState() }));
+    try {
+        game.updateGame(fps);
+    } catch (err) {
+        console.error('[GAME LOOP ERROR] Error en updateGame():', err);
+    }
+
+    try {
+        ws.broadcast(JSON.stringify({ type: "update", gameState: game.getGameState() }));
+    } catch (err) {
+        console.error('[GAME LOOP BROADCAST ERROR] Error enviant gameState:', err);
+    }
 };
 
-// Gestionar el tancament del servidor
+// Tancament controlat
 process.on('SIGTERM', shutDown);
 process.on('SIGINT', shutDown);
 
 function shutDown() {
-    console.log('Rebuda senyal de tancament, aturant el servidor...');
-    httpServer.close();
-    ws.end();
-    gameLoop.stop();
-    process.exit(0);
+    try {
+        console.log('[SHUTDOWN] Rebuda senyal de tancament, aturant el servidor...');
+        httpServer.close(() => {
+            console.log('[HTTP] Servidor tancat correctament.');
+        });
+        ws.end();
+        gameLoop.stop();
+        process.exit(0);
+    } catch (err) {
+        console.error('[SHUTDOWN ERROR] Error durant el tancament:', err);
+        process.exit(1);
+    }
 }
