@@ -74,7 +74,7 @@ class GameLogic {
         this.timeToStart = 0;
         this.players = new Map();
         this.waitingPlayers = new Map();
-        this.elapsedTime = 0;
+        this.elapsedTime = 120;
         this.usedColors = new Set();
     }
 
@@ -102,7 +102,7 @@ class GameLogic {
         const filePath = path.join(__dirname, '../public', 'game_data.json'); 
         return fs.readFile(filePath, 'utf-8')
             .then(data => {
-                console.log(data);
+                if(process.env.NODE_ENV === "development") console.log(data);
                 return JSON.parse(data);
             })
             .catch(error => {
@@ -192,107 +192,121 @@ class GameLogic {
 
     // Blucle de joc (funció que s'executa contínuament)
     updateGame(fps) {
-        if(this.gameStarted) {
-            if(this.players.size <= 1) {
-                this.gameStarted = false;
-                this.players.clear();
-                this.restartGameData();
-            }
-            let deltaTime = 1 / fps;
-            this.elapsedTime += deltaTime;
-
-            // Actualitzar la posició dels clients
-            this.players.forEach(client => {
-                if (!client) return;
-
-                // Check if player and flag are colliding
-                if(this.areRectColliding(
-                    client.x * TILE_SIZE * WIDTH_IN_TILES, 
-                    client.y * TILE_SIZE * HEIGHT_IN_TILES, 
-                    CHARACTER_SIZE, 
-                    CHARACTER_SIZE, 
-                    this.flag.dx * TILE_SIZE * WIDTH_IN_TILES, 
-                    this.flag.dy * TILE_SIZE * HEIGHT_IN_TILES, 
-                    FLAG_SIZE, 
-                    FLAG_SIZE
-                ) && this.flag.available) {
-                    client.points += 50;
-                    client.hasFlag = true;
-                    this.flag.available = false;
+        try {
+            if(this.gameStarted) {
+                if(this.players.size <= 1) {
+                    this.gameStarted = false;
+                    this.players.clear();
+                    this.restartGameData();
+                    return;
                 }
-
-                // Check if player and chest are colliding, and user has flag
-                if(this.areRectColliding(
-                    client.x,
-                    client.y,
-                    CHARACTER_SIZE / (TILE_SIZE * WIDTH_IN_TILES),
-                    CHARACTER_SIZE / (TILE_SIZE * HEIGHT_IN_TILES),
-                    CHESTS[client.color].dx,
-                    CHESTS[client.color].dy,
-                    CHESTS[client.color].width,
-                    CHESTS[client.color].height
-                ) && client.hasFlag) {
-                    console.log("DEJANDO BANDERA")
-                    client.hasFlag = false;
-                    client.points += 500;
-                    do {
-                        this.flag = {
-                            available: true,
-                            dx: Math.random(),
-                            dy: Math.random()
+                let deltaTime = 1 / fps;
+                this.elapsedTime -= deltaTime;
+    
+                if(this.elapsedTime <= 0) {
+                    this.gameStarted = false;
+                    this.restartGameData();
+                    this.elapsedTime = 120;
+                    return;
+                }
+    
+                // Actualitzar la posició dels clients
+                this.players.forEach(client => {
+                    if (!client) return;
+    
+                    // Check if player and flag are colliding
+                    if(this.areRectColliding(
+                        client.x * TILE_SIZE * WIDTH_IN_TILES, 
+                        client.y * TILE_SIZE * HEIGHT_IN_TILES, 
+                        CHARACTER_SIZE, 
+                        CHARACTER_SIZE, 
+                        this.flag.dx * TILE_SIZE * WIDTH_IN_TILES, 
+                        this.flag.dy * TILE_SIZE * HEIGHT_IN_TILES, 
+                        FLAG_SIZE, 
+                        FLAG_SIZE
+                    ) && this.flag.available) {
+                        client.points += 50;
+                        client.hasFlag = true;
+                        this.flag.available = false;
+                    }
+    
+                    // Check if player and chest are colliding, and user has flag
+                    if(this.areRectColliding(
+                        client.x,
+                        client.y,
+                        CHARACTER_SIZE / (TILE_SIZE * WIDTH_IN_TILES),
+                        CHARACTER_SIZE / (TILE_SIZE * HEIGHT_IN_TILES),
+                        CHESTS[client.color].dx,
+                        CHESTS[client.color].dy,
+                        CHESTS[client.color].width,
+                        CHESTS[client.color].height
+                    ) && client.hasFlag) {
+                        if(process.env.NODE_ENV === "development") console.log("DEJANDO BANDERA")
+                        client.hasFlag = false;
+                        client.points += 500;
+                        do {
+                            this.flag = {
+                                available: true,
+                                dx: Math.random(),
+                                dy: Math.random()
+                            }
+                        }
+                        while (!this.areRectColliding(
+                            this.flag.dx,
+                            this.flag.dy,
+                            FLAG_SIZE / (TILE_SIZE * WIDTH_IN_TILES),
+                            FLAG_SIZE / (TILE_SIZE * HEIGHT_IN_TILES),
+                            FLAG_ZONE.dx,
+                            FLAG_ZONE.dy,
+                            FLAG_ZONE.width,
+                            FLAG_ZONE.height)
+                        )
+    
+                    }
+                    
+                    if (client.moving) {
+                        let nextX = client.x + (DIRECTIONS[client.direction].dx * client.speed * deltaTime);
+                        let nextY = client.y + (DIRECTIONS[client.direction].dy * client.speed * deltaTime);
+                    
+                        if (this.checkValidPosition(nextX, nextY, client)) {
+                            client.x = nextX;
+                            client.y = nextY;
                         }
                     }
-                    while (!this.areRectColliding(
-                        this.flag.dx,
-                        this.flag.dy,
-                        FLAG_SIZE / (TILE_SIZE * WIDTH_IN_TILES),
-                        FLAG_SIZE / (TILE_SIZE * HEIGHT_IN_TILES),
-                        FLAG_ZONE.dx,
-                        FLAG_ZONE.dy,
-                        FLAG_ZONE.width,
-                        FLAG_ZONE.height)
-                    )
-
-                }
-                
-                if (client.moving) {
-                    let nextX = client.x + (DIRECTIONS[client.direction].dx * client.speed * deltaTime);
-                    let nextY = client.y + (DIRECTIONS[client.direction].dy * client.speed * deltaTime);
-                
-                    if (this.checkValidPosition(nextX, nextY, client)) {
-                        client.x = nextX;
-                        client.y = nextY;
-                    }
-                }
-                
-                // console.log(`Client ${client.id} - X: ${client.x}, Y: ${client.y}`);
-            });
-        }else {
-            if(this.players.size >= 2 && !this.waitingToStart) {
-                console.log("Starting game...");
-                this.waitingToStart = true;
-                this.timeToStart = 15;
-                const interval = setInterval(() => {
-                    if(this.players.size < 2) {
-                        this.timeToStart = 0;
-                    }
-                    if (this.timeToStart <= 0) {
-                        clearInterval(interval);
-                        this.waitingToStart = false;
-                
-                        if (this.players.size >= 1) {
-                            this.gameStarted = true;
-                            console.log("Game started!");
+                    
+                    // console.log(`Client ${client.id} - X: ${client.x}, Y: ${client.y}`);
+                });
+            }else {
+                if(this.players.size >= 2 && !this.waitingToStart) {
+                    if(process.env.NODE_ENV === "development") console.log("Starting game...");
+                    this.waitingToStart = true;
+                    this.timeToStart = 15;
+                    const interval = setInterval(() => {
+                        if(this.players.size < 2) {
+                            this.timeToStart = 0;
                         }
-                
-                        return; // salir del callback
-                    }
-                
-                    this.timeToStart--;
-                }, 1000);
-                
+                        if (this.timeToStart <= 0) {
+                            clearInterval(interval);
+                            this.waitingToStart = false;
+                    
+                            if (this.players.size >= 1) {
+                                this.gameStarted = true;
+                                
+                                if(process.env.NODE_ENV === "development") console.log("Game started!");
+                            }
+                    
+                            return; 
+                        }
+                    
+                        this.timeToStart--;
+                    }, 1000);
+                    
+                }
             }
+        } catch (e) {
+            console.log(e)
         }
+        
         
     }
 
@@ -321,7 +335,7 @@ class GameLogic {
         this.gameStarted = false;
         this.waitingToStart = false;
         this.timeToStart = 0;
-        this.elapsedTime = 0;
+        this.elapsedTime = 120;
 
         pos = {
             x: 88 / (TILE_SIZE * WIDTH_IN_TILES),
@@ -368,7 +382,8 @@ class GameLogic {
             players: Array.from(this.players.values()),
             flag: this.flag,
         }
-        console.log(`GameState: ${JSON.stringify(gameState)}`);
+        if(process.env.NODE_ENV === "development") console.log(`GameState: ${JSON.stringify(gameState)}`);
+        
         return gameState;
     }
 }

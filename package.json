@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "main": "./server/app.js",
     "scripts": {
-        "dev": "node --watch --watch-path ./server/ ./server/app.js",
+        "dev": "NODE_ENV=development node ./server/app.js",
         "pm2start": "pm2 start ./server/app.js",
         "pm2list": "pm2 list",
         "pm2stop": "pm2 delete app",
